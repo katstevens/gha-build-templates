@@ -1,0 +1,77 @@
+name: Build lambda artefact and create zipped release
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'examples/mylambda/**'
+
+concurrency: mylambda
+
+jobs:
+
+  build:
+    permissions:
+      contents: write
+      
+    name: Release
+    runs-on: ubuntu-latest
+    
+    steps:
+      # Checkout the code to build from
+      - uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b
+        with:
+          fetch-depth: '0'
+     
+      # Run the Node build script to lint/compile etc into a folder called 'dist'
+      - name: NPM Build
+        run: npm run build
+
+      - name: Create .zip Archive
+        id: create-zip
+        env:
+          VERSION: 1
+        run: |
+          ZIPFILENAME="mylambda-${VERSION}"
+          zip -j -r $ZIPFILENAME.zip dist/*
+
+          echo "::set-output name=ZIPFILENAME::${ZIPFILENAME}"
+          echo "::set-output name=VERSION::${VERSION}"      
+          
+      - name: Upload Archive
+        uses: actions/upload-artifact@83fd05a356d7e2593de66fc9913b3002723633cb
+        with:
+          name: ${{ steps.create-zip.outputs.ZIPFILENAME }}
+          path: ${{ steps.create-zip.outputs.ZIPFILENAME }}.zip
+          if-no-files-found: error
+      
+      - name: Create Release
+        if: ${{ github.ref == 'refs/heads/main' }}
+        id: create-release
+        uses: actions/github-script@d556feaca394842dc55e4734bf3bb9f685482fa0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            var fs = require('fs')
+            try {
+              const releaseResponse = await github.rest.repos.createRelease({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                tag_name: "${{ steps.version.outputs.VERSION }}",
+                name: "${{ steps.version.outputs.VERSION }}"
+              })
+
+              const fileName = "${{ steps.create-zip.outputs.ZIPFILENAME }}.zip"
+
+              const releaseUploadResponse = await github.rest.repos.uploadReleaseAsset({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                release_id: releaseResponse.data.id,
+                name: fileName,
+                data: fs.readFileSync(fileName)
+              })
+            } catch(err) {
+              console.error(`Failed to create release: ${err.message}`)
+              throw err
+            }
