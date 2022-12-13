@@ -1,0 +1,14 @@
+{
+  "description": "",  
+  "scripts": {
+    "build": "npm ci",    
+  },
+  "version": "0.1.0",
+  "license": "MIT",
+  "engines": {
+    "node": "18.12.1"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "3.188.0"
+  },
+}
