@@ -6,3 +6,5 @@ RUN addgroup -g 1000 user && \
 RUN apk add --no-cache curl
 
 USER user
+
+# Adding a comment to trigger a workflow run
