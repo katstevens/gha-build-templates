@@ -1,2 +1,2 @@
 # gha-build-templates
-Example Github Action for building a docker image
+Example Github Actions, for building a docker image and lambda artefacts
