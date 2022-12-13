@@ -26,6 +26,7 @@ jobs:
      
       # Run the Node build script to lint/compile etc into a folder called 'dist'
       - name: NPM Build
+        working-directory: examples/mylambda
         run: npm run build
 
       - name: Create .zip Archive
@@ -46,32 +47,32 @@ jobs:
           path: ${{ steps.create-zip.outputs.ZIPFILENAME }}.zip
           if-no-files-found: error
       
-      - name: Create Release
-        if: ${{ github.ref == 'refs/heads/main' }}
-        id: create-release
-        uses: actions/github-script@d556feaca394842dc55e4734bf3bb9f685482fa0
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            var fs = require('fs')
-            try {
-              const releaseResponse = await github.rest.repos.createRelease({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                tag_name: "${{ steps.version.outputs.VERSION }}",
-                name: "${{ steps.version.outputs.VERSION }}"
-              })
-
-              const fileName = "${{ steps.create-zip.outputs.ZIPFILENAME }}.zip"
-
-              const releaseUploadResponse = await github.rest.repos.uploadReleaseAsset({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                release_id: releaseResponse.data.id,
-                name: fileName,
-                data: fs.readFileSync(fileName)
-              })
-            } catch(err) {
-              console.error(`Failed to create release: ${err.message}`)
-              throw err
-            }
+#      - name: Create Release
+#        if: ${{ github.ref == 'refs/heads/main' }}
+#        id: create-release
+#        uses: actions/github-script@d556feaca394842dc55e4734bf3bb9f685482fa0
+#        with:
+#          github-token: ${{ secrets.GITHUB_TOKEN }}
+#          script: |
+#            var fs = require('fs')
+#            try {
+#              const releaseResponse = await github.rest.repos.createRelease({
+#                owner: context.repo.owner,
+#                repo: context.repo.repo,
+#                tag_name: "${{ steps.version.outputs.VERSION }}",
+#                name: "${{ steps.version.outputs.VERSION }}"
+#              })
+#
+#              const fileName = "${{ steps.create-zip.outputs.ZIPFILENAME }}.zip"
+#
+#              const releaseUploadResponse = await github.rest.repos.uploadReleaseAsset({
+#                owner: context.repo.owner,
+#                repo: context.repo.repo,
+#                release_id: releaseResponse.data.id,
+#                name: fileName,
+#                data: fs.readFileSync(fileName)
+#              })
+#            } catch(err) {
+#              console.error(`Failed to create release: ${err.message}`)
+#              throw err
+#            }
